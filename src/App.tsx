@@ -3,6 +3,8 @@ import { Routes, Route, Link} from 'react-router-dom'
 import { Button, Navbar, Container, Nav, Row } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import "./App.css";
+import { emitSetupPuzzle } from './socket'
+// import { emit } from 'process';
 
 interface JigsawPuzzleProps {
   /** Source of the image. Can be any URL or relative path. */
@@ -100,13 +102,29 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
     image.onload = () => onImageLoaded(image)
     image.src = imageSrc
   }, [imageSrc, rows, columns])
+  
+
+  function tilenumber(tile: Tile){
+    Array.from(Array(rows * columns).keys()).map(tempposition => {
+      if (tile.correctPosition == tempposition){
+        "getObjects().forEach 기능을 넣어야 할듯"
+        const tiledata ={
+          tileCopos : tile.correctPosition,
+          tileXval : tile.currentPosXPerc,
+          tileYval : tile.currentPosYPerc, 
+        }
+        emitSetupPuzzle(tiledata)
+  
+      }
+    })
+  }
 
   const onTileMouseDown = useCallback((tile: Tile, event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!tile.solved) {
       if (event.type === 'touchstart') {
         document.documentElement.style.setProperty('overflow', 'hidden')
       }
-
+      console.log(tile.correctPosition);
       const eventPos = {
         x: (event as React.MouseEvent).pageX ?? (event as React.TouchEvent).touches[0].pageX,
         y: (event as React.MouseEvent).pageY ?? (event as React.TouchEvent).touches[0].pageY
@@ -129,6 +147,7 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
         x: (event as React.MouseEvent).pageX ?? (event as React.TouchEvent).touches[0].pageX,
         y: (event as React.MouseEvent).pageY ?? (event as React.TouchEvent).touches[0].pageY
       }
+      
       const draggedToRelativeToRoot = {
         x: clamp(
           eventPos.x - rootElement.current!.getBoundingClientRect().left - draggingTile.current.mouseOffsetX,
@@ -223,9 +242,10 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
 
 return (
 
-  <div style={{height :'1000px',width :'1920px'}}>
+  <div style={{height :'1000px',width :'1000px'}}>
     <input type='url' style={{alignItems: 'center', margin : 'auto', display : 'flex', justifyContent : 'center'}} 
         onChange={(e)=>{setimg(e.target.value); console.log(e.target.value);}}></input>
+
 
         <JigsawPuzzle imageSrc={img}
         rows={3}
