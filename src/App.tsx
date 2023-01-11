@@ -2,6 +2,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Routes, Route, Link} from 'react-router-dom'
 import { Button, Navbar, Container, Nav, Row } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
+import "./App.css";
 
 interface JigsawPuzzleProps {
   /** Source of the image. Can be any URL or relative path. */
@@ -16,12 +17,8 @@ interface JigsawPuzzleProps {
 
 
 function App(){
+  let [img, setimg] = useState('');
 
-  const [text, setText] = useState("퍼즐을 맞춰보세요!!");
-      
-  const set = () => {
-      setText("정답입니다!!");
-  };
 const clamp = (value: number, min: number, max: number) => {
   if (value < min) { return min }
   if (value > max) { return max }
@@ -40,12 +37,10 @@ interface Tile {
   solved: boolean
 }
 
-let [img, setimg] = useState('');
-
 const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
   imageSrc,
-  rows = 3,
-  columns = 4,
+  rows = 2,
+  columns = 2,
   onSolved = () => {}
 }) => {
   const [tiles, setTiles] = useState<Tile[] | undefined>()
@@ -228,11 +223,15 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
 
 return (
 
-  <div>
+  <div style={{height :'1000px',width :'1920px'}}>
     <input type='url' style={{alignItems: 'center', margin : 'auto', display : 'flex', justifyContent : 'center'}} 
         onChange={(e)=>{setimg(e.target.value); console.log(e.target.value);}}></input>
 
-        <JigsawPuzzle imageSrc={img}/>
+        <JigsawPuzzle imageSrc={img}
+        rows={3}
+        columns={3}
+        onSolved={() => alert('Solved!')}
+        />
   </div>
   
 );
