@@ -3,7 +3,10 @@ import { Routes, Route, Link} from 'react-router-dom'
 import { Button, Navbar, Container, Nav, Row } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import "./App.css";
-import { emitSetupPuzzle } from './socket'
+import io from 'socket.io-client'
+// import { emitSetupPuzzle, setupTile } from './socket'
+const socket = io("http://localhost:8080/")
+
 // import { emit } from 'process';
 
 interface JigsawPuzzleProps {
@@ -18,8 +21,14 @@ interface JigsawPuzzleProps {
 }
 
 
+
 function App(){
   let [img, setimg] = useState('');
+
+  // const emitSetupPuzzle = (tiledata :[]) =>{
+  //   socket.emit('setup-puzzle', tiledata)
+  // }
+  
 
 const clamp = (value: number, min: number, max: number) => {
   if (value < min) { return min }
@@ -29,14 +38,14 @@ const clamp = (value: number, min: number, max: number) => {
 const solveTolerancePercentage = 0.028
 
 interface Tile {
-  tileOffsetX: number
+  tileOffsetX: number,
   tileOffsetY: number,
   tileWidth: number,
   tileHeight: number,
   correctPosition: number,
   currentPosXPerc: number,
   currentPosYPerc: number,
-  solved: boolean
+  solved: boolean,
 }
 
 const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
@@ -67,8 +76,27 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
           currentPosYPerc: Math.random() * (1 - 1 / columns),
           solved: false,
         }))
+        
     )
   }, [rows, columns])
+  if (tiles !== undefined)
+  console.log(tiles[2].correctPosition);
+
+  function tileNumber(value:null) {
+    Array.from(Array(rows * columns).keys()).map(tempposition => {
+   if (tiles !== undefined && tiles[tempposition].correctPosition == tempposition)
+          {
+            const tiledata : {tileCopos : number, tileXval : number, tileYval : number} = {
+              tileCopos : tiles[tempposition].correctPosition,
+              tileXval : tiles[tempposition].currentPosXPerc,
+              tileYval : tiles[tempposition].currentPosYPerc, 
+            }
+            socket.emit('setup-puzzle', tiledata)
+            console.log ('emit 성공');
+          }
+        }
+    )
+  }
 
   const onRootElementResized = useCallback((args: ResizeObserverEntry[]) => {
     const contentRect = args.find(it => it.contentRect)?.contentRect
@@ -104,20 +132,16 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
   }, [imageSrc, rows, columns])
   
 
-  function tilenumber(tile: Tile){
-    Array.from(Array(rows * columns).keys()).map(tempposition => {
-      if (tile.correctPosition == tempposition){
-        "getObjects().forEach 기능을 넣어야 할듯"
-        const tiledata ={
-          tileCopos : tile.correctPosition,
-          tileXval : tile.currentPosXPerc,
-          tileYval : tile.currentPosYPerc, 
-        }
-        emitSetupPuzzle(tiledata)
-  
+  // const setupTile = () =>{
+    socket.on('setupallpuzzle', data => {
+      const {tileCopos, tileXval, tileYval} = data
+      if (tiles !== undefined && tiles[1].correctPosition == tileCopos){
+        tiles[1].currentPosXPerc = tileXval
+        tiles[1].currentPosYPerc = tileYval
       }
     })
-  }
+  // }
+    
 
   const onTileMouseDown = useCallback((tile: Tile, event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!tile.solved) {
@@ -245,8 +269,6 @@ return (
   <div style={{height :'1000px',width :'1000px'}}>
     <input type='url' style={{alignItems: 'center', margin : 'auto', display : 'flex', justifyContent : 'center'}} 
         onChange={(e)=>{setimg(e.target.value); console.log(e.target.value);}}></input>
-
-
         <JigsawPuzzle imageSrc={img}
         rows={3}
         columns={3}

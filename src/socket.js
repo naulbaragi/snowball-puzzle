@@ -25,9 +25,9 @@ export const emitClear = (obj) => {
     socket.emit('object-clear',obj)
 }
 
-export const emitSetupPuzzle = (tiledata) =>{
-    socket.emit('setup-puzzle', tiledata)
-}
+// export const emitSetupPuzzle = (tiledata) =>{
+//     socket.emit('setup-puzzle', tiledata)
+// }
 
 // listeners
 export const addObj = canvas => {
@@ -163,14 +163,14 @@ export const clearObj = canvas =>{
     })
 }
 
-export const setupTile = () =>{
-  socket.on('setupallpuzzle', data => {
-    'getObjects().forEach기능 넣고 '
-    if (tile.correctPosition == tileCopos){
-      tile.currentPosXPerc = tileXval
-      tile.currentPosYPerc = tileYval
-    }
-  })
-}
+// export const setupTile = () =>{
+//   socket.on('setupallpuzzle', data => {
+//     const {tileCopos, tileXval, tileYval} = data
+//     if (tiles[1].correctPosition == tileCopos){
+//       tiles[1].currentPosXPerc = tileXval
+//       tiles[1].currentPosYPerc = tileYval
+//     }
+//   })
+// }
 
 export default socket

@@ -65,6 +65,7 @@ io.on('connection', socket => {
 
     socket.on('setup-puzzle', data => {
       socket.broadcast.emit('setupallpuzzle',data);
+      console.log('서버 on 성공')
     })
  })
 //  app.get('/', function (요청, 응답) {
