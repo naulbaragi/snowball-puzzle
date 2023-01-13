@@ -67,6 +67,11 @@ io.on('connection', socket => {
       socket.broadcast.emit('setupallpuzzle',data);
       console.log('서버 on 성공')
     })
+
+    socket.on('move-puzzle', data =>{
+      socket.broadcast.emit('movesinglepuzzle',data);
+      console.log('move puzzle')
+    })
  })
 //  app.get('/', function (요청, 응답) {
 //     응답.sendFile(path.join(__dirname, '/build/index.html'));
