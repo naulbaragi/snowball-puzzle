@@ -20,14 +20,9 @@ interface JigsawPuzzleProps {
   onSolved?: () => void
 }
 
-
-
 function App(){
   let [img, setimg] = useState('');
 
-  // const emitSetupPuzzle = (tiledata :[]) =>{
-  //   socket.emit('setup-puzzle', tiledata)
-  // }
   
 
 const clamp = (value: number, min: number, max: number) => {
@@ -59,10 +54,11 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
   const [imageSize, setImageSize] = useState<{ width: number, height: number }>()
   const [rootSize, setRootSize] = useState<{ width: number, height: number }>()
   const [calculatedHeight, setCalculatedHeight] = useState<number>()
+  const [socketchange, setSocketchange] = useState<number>()
   const rootElement = useRef<HTMLElement>()
   const resizeObserver = useRef<ResizeObserver>()
   const draggingTile = useRef<{ tile: Tile, elem: HTMLElement, mouseOffsetX: number, mouseOffsetY: number } | undefined>()
-  const draggingTileBYS = useRef<{ tile: Tile, elem: HTMLElement} | undefined>()
+  const draggingTileBYS = useRef<{elem: HTMLElement} | undefined>()
   const onImageLoaded = useCallback((image: HTMLImageElement) => {
     setImageSize({ width: image.width, height: image.height })
     if (rootSize) { setCalculatedHeight(rootSize!.width / image.width * image.height) }
@@ -79,65 +75,7 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
           solved: false,
         }))
     )
-    console.log('setTile ok');
   }, [rows, columns])
-
-
-  // if (tiles !== undefined)
-  // console.log(tiles[2].correctPosition);
-
-//   const tileNumber = () => {
-//     socket.emit('setup-puzzle');
-//     console.log ('emit 성공');
-//     for (let i = 0; i <= (rows * columns); i++){
-//       console.log(i);
-//       if (tiles !==undefined)
-//           console.log(tiles[i]);
-
-    //   if (tiles !== undefined && tiles[i].correctPosition == i){
-    //     console.log ('타일내부진입');
-    //     const tiledata : {tileCopos : number, tileXval : number, tileYval : number} = {
-    //       tileCopos : tiles[i].correctPosition,
-    //       tileXval : tiles[i].currentPosXPerc,
-    //       tileYval : tiles[i].currentPosYPerc, 
-    // }
-//     socket.emit('setup-puzzle', tiledata)
-//   }
-// }
-
-
-    // Array.from(Array(rows * columns).keys())
-    // Array.from(Array(rows * columns).keys()).map(function(a){
-    //   console.log ('map 돌아감');
-    // })
-    //   if (tiles[a].correctPosition == a){
-    //     console.log ('타일내부진입');
-    //     const tiledata : {tileCopos : number, tileXval : number, tileYval : number} = {
-    //       tileCopos : tiles[a].correctPosition,
-    //       tileXval : tiles[a].currentPosXPerc,
-    //       tileYval : tiles[a].currentPosYPerc, 
-    //   }
-    //   socket.emit('setup-puzzle', tiledata)
-    //   console.log ('emit 성공');
-    // }
-    // })
-
-
-
-
-// function tilesNumber(a : number){
-//   if (tiles !== undefined && tiles[a].correctPosition == a){
-//     const tiledata : {tileCopos : number, tileXval : number, tileYval : number} = {
-//       tileCopos : tiles[a].correctPosition,
-//       tileXval : tiles[a].currentPosXPerc,
-//       tileYval : tiles[a].currentPosYPerc, 
-//   }
-//   socket.emit('setup-puzzle', tiledata)
-//   console.log ('emit 성공');
-// }
-// }
-
-  
 
   const onRootElementResized = useCallback((args: ResizeObserverEntry[]) => {
     const contentRect = args.find(it => it.contentRect)?.contentRect
@@ -170,12 +108,8 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
     const image = new Image()
     image.onload = () => onImageLoaded(image)
     image.src = imageSrc
-  }, [imageSrc, rows, columns])
-  
-
-  // const setupTile = () =>{
     
-    
+  }, [imageSrc, rows, columns])    
 
   const onTileMouseDown = useCallback((tile: Tile, event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!tile.solved) {
@@ -194,10 +128,6 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
         mouseOffsetY: eventPos.y - (event.target as HTMLDivElement).getBoundingClientRect().y
       };
       (event.target as HTMLDivElement).classList.add('jigsaw-puzzle__piece--dragging')
-      // console.log((event.target as HTMLDivElement).id);
-      // console.log((event.target as HTMLDivElement).id);
-    //   var tempelement = document.getElementById("C3")
-    // console.log(tempelement);
     }
   }, [draggingTile])
 
@@ -211,11 +141,6 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
         y: (event as React.MouseEvent).pageY ?? (event as React.TouchEvent).touches[0].pageY
       }
       
-      // socket.on('movesinglepuzzle', data => {
-      //   const {tileCopos, tileXval, tileYval} = data
-      //   draggingTile.current.mouseOffsetX = tileXval
-      // })
-      // draggingTile.current.mouseOffsetX = tileXval
       const draggedToRelativeToRoot = {
         x: clamp(
           eventPos.x - rootElement.current!.getBoundingClientRect().left - draggingTile.current.mouseOffsetX,
@@ -237,65 +162,62 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
       }
       console.log(movepuzzledata);
       socket.emit('move-puzzle',movepuzzledata);
-      
-
+      console.log('이밋 성공');
+    
       // console.log(draggedToRelativeToRoot.x);
-      socket.on('movesinglepuzzle', data => {
-        const emitreve = useCallback((tile: Tile) =>{
-        console.log('진행');
-        const {tileId, tileXval, tileYval} = data
-      var tempelement = document.getElementById(tileId)
-      console.log(tempelement)
-      draggingTileBYS.current = {
-        tile,
-        elem: document.getElementById(tileId) as HTMLElement
-      };
-      draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
-        draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
-      }, [draggingTileBYS])
-        console.log('진입성공');})
-
-
       draggingTile.current.elem.style.setProperty('left', `${draggedToRelativeToRoot.x}px`)
       draggingTile.current.elem.style.setProperty('top', `${draggedToRelativeToRoot.y}px`)
     }
   }, [draggingTile, rootSize])
 
+let movingdata :{tileCopos : number, tileId : string, tileXval : number, tileYval : number}
 
-
-  // socket.on('movesinglepuzzle', data => {
-  //   function emitreve(tile: Tile){
-  //   if (draggingTileBYS.current !== undefined)
-  //   {
-  //     const {tileId, tileXval, tileYval} = data
-  //   var tempelement = document.getElementById(tileId)
-  //   console.log(tempelement)
-  //   draggingTileBYS.current = {
-  //     tile,
-  //     elem: document.getElementById(tileId) as HTMLElement
-  //   };
-
-  //   draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
-  //     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
-  //   }
-  //   }
-  // })
+socket.on('movesinglepuzzle',(data) => {
+  movingdata = data
+  temp()
+  })
 
 
 
-  // const emitreve = useCallback((tile: Tile) =>{
-  //   console.log('진행');
-  //   const {tileId, tileXval, tileYval} = data
-  // var tempelement = document.getElementById(tileId)
-  // console.log(tempelement)
-  // draggingTileBYS.current = {
-  //   tile,
-  //   elem: document.getElementById(tileId) as HTMLElement
-  // };
-  // draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
-  //   draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
-  // }, [draggingTileBYS])
-  
+
+  function temp(){
+    const {tileId, tileXval, tileYval} = movingdata
+    console.log('진입성공');
+    draggingTileBYS.current = {
+      elem: document.getElementById(tileId) as HTMLElement
+    };
+
+    draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
+    draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
+  }
+
+// const onTilesocket = useCallback((tile: Tile, element: HTMLElement | null)) => {
+//   if (draggingTileBYS.current)
+//   {
+//     draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
+//     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
+//   }
+// },[socketchange])
+
+
+
+
+
+// socket.on('movesinglepuzzle', data => {
+//     (tile: Tile, elem: HTMLElement) =>{
+//     console.log('진행');
+//     const {tileId, tileXval, tileYval} = data
+//   var tempelement = document.getElementById(tileId)
+//   console.log(tempelement)
+//   draggingTileBYS.current = {
+//     tile,
+//     elem: document.getElementById(tileId) as HTMLElement
+//   };
+//   draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
+//     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
+//   }})
+
+
 
 
 
