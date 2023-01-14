@@ -63,6 +63,10 @@ io.on('connection', socket => {
       console.log('clear canvas')
     })
 
+    socket.on('sendPuzzleURL', data =>{
+      socket.broadcast.emit('puzzleStart', data);
+  })
+
     socket.on('setup-puzzle', data => {
       socket.broadcast.emit('setupallpuzzle',data);
       console.log('서버 on 성공')

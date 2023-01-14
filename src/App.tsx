@@ -21,7 +21,15 @@ interface JigsawPuzzleProps {
 }
 
 function App(){
-  let [img, setimg] = useState('');
+  let [img, setImg] = useState('');
+
+  const emitUrl = (imgUrl: string) => {
+    socket.emit('sendPuzzleURL', imgUrl)
+}
+
+socket.on('puzzleStart', function(data){
+  setImg(data);
+});
 
   
 
@@ -30,7 +38,7 @@ const clamp = (value: number, min: number, max: number) => {
   if (value > max) { return max }
   return value
 }
-const solveTolerancePercentage = 0.028
+const solveTolerancePercentage = 0.014
 
 interface Tile {
   tileOffsetX: number,
@@ -174,13 +182,13 @@ let movingdata :{tileCopos : number, tileId : string, tileXval : number, tileYva
 
 socket.on('movesinglepuzzle',(data) => {
   movingdata = data
-  temp()
+  moving()
   })
 
 
 
 
-  function temp(){
+  function moving(){
     const {tileId, tileXval, tileYval} = movingdata
     console.log('진입성공');
     draggingTileBYS.current = {
@@ -190,6 +198,7 @@ socket.on('movesinglepuzzle',(data) => {
     draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
   }
+
 
 // const onTilesocket = useCallback((tile: Tile, element: HTMLElement | null)) => {
 //   if (draggingTileBYS.current)
@@ -303,14 +312,14 @@ socket.on('movesinglepuzzle',(data) => {
 
 return (
 
-  <div style={{height :'1000px',width :'1000px'}}>
+  <div style={{height :'500px',width :'500px'}}>
     <input type='url' style={{alignItems: 'center', margin : 'auto', display : 'flex', justifyContent : 'center'}} 
-        onChange={(e)=>{setimg(e.target.value); console.log(e.target.value);}}></input>
+        onChange={(e)=>{setImg(e.target.value); emitUrl(e.target.value);}}></input>
         {/* <button onClick={tileNumber}>버튼</button> */}
 
         <JigsawPuzzle imageSrc={img}
-        rows={2}
-        columns={2}
+        rows={3}
+        columns={3}
         onSolved={() => alert('Solved!')}
         />
   </div>
