@@ -31,14 +31,14 @@ socket.on('puzzleStart', function(data){
   setImg(data);
 });
 
-  
+  // const [tempvalue, settempvalue] = useState('0')
 
 const clamp = (value: number, min: number, max: number) => {
   if (value < min) { return min }
   if (value > max) { return max }
   return value
 }
-const solveTolerancePercentage = 0.014
+const solveTolerancePercentage = 0.028
 
 interface Tile {
   tileOffsetX: number,
@@ -66,7 +66,7 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
   const rootElement = useRef<HTMLElement>()
   const resizeObserver = useRef<ResizeObserver>()
   const draggingTile = useRef<{ tile: Tile, elem: HTMLElement, mouseOffsetX: number, mouseOffsetY: number } | undefined>()
-  const draggingTileBYS = useRef<{elem: HTMLElement} | undefined>()
+  const draggingTileBYS = useRef<{tile: Tile, elem: HTMLElement} | undefined>()
   const onImageLoaded = useCallback((image: HTMLImageElement) => {
     setImageSize({ width: image.width, height: image.height })
     if (rootSize) { setCalculatedHeight(rootSize!.width / image.width * image.height) }
@@ -162,15 +162,14 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
         )
       }
 
-      const movepuzzledata : {tileCopos : number, tileId : string, tileXval : number, tileYval : number} = {
-        tileCopos : draggingTile.current.tile.correctPosition,
+      const movepuzzledata : {tileCopos : Tile, tileId : string, tileXval : number, tileYval : number} = {
+        tileCopos : draggingTile.current.tile,
         tileId : (event.target as HTMLDivElement).id,
         tileXval : draggedToRelativeToRoot.x,
         tileYval : draggedToRelativeToRoot.y,
       }
-      console.log(movepuzzledata);
       socket.emit('move-puzzle',movepuzzledata);
-      console.log('이밋 성공');
+      
     
       // console.log(draggedToRelativeToRoot.x);
       draggingTile.current.elem.style.setProperty('left', `${draggedToRelativeToRoot.x}px`)
@@ -178,26 +177,70 @@ const JigsawPuzzle: FC<JigsawPuzzleProps> = ({
     }
   }, [draggingTile, rootSize])
 
-let movingdata :{tileCopos : number, tileId : string, tileXval : number, tileYval : number}
+let movingdata :{tileCopos : Tile, tileId : string, tileXval : number, tileYval : number}
 
 socket.on('movesinglepuzzle',(data) => {
   movingdata = data
+  // settempvalue(tempvalue+1)
   moving()
   })
 
 
+  function moving() {
+    const {tileCopos, tileId, tileXval, tileYval} = movingdata
 
-
-  function moving(){
-    const {tileId, tileXval, tileYval} = movingdata
-    console.log('진입성공');
     draggingTileBYS.current = {
+      tile : tileCopos,
       elem: document.getElementById(tileId) as HTMLElement
     };
 
     draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
   }
+
+  // function moving() {
+  //   const {tileCopos, tileId, tileXval, tileYval} = movingdata
+  //   console.log('진입성공');
+
+  //   draggingTileBYS.current = tileCopos
+
+  //   draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
+  //   draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
+  // }
+
+
+
+  // const moving = useCallback((tile : Tile) => {
+  //   const {tileId, tileXval, tileYval} = movingdata
+  //   console.log('진입성공');
+  //   draggingTileBYS.current = {
+  //     tile,
+  //     elem: document.getElementById(tileId) as HTMLElement
+  //   };
+
+  //   draggingTileBYS.current.elem.style.setProperty('left', `${tileXval}px`)
+  //   draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
+  // }, [tempvalue])
+
+
+
+  // function clickon(){
+  //   if (draggingTileBYS.current){
+  //     const draggedToPercentageBYS = {
+  //       x: clamp(draggingTileBYS.current!.elem.offsetLeft / rootSize!.width, 0, 1),
+  //       y: clamp(draggingTileBYS.current!.elem.offsetTop / rootSize!.height, 0, 1)
+  //     }
+  //     const {tileCopos,tileId} = movingdata
+  //     // const draggedTileBYS = tileCopos (여기에 대신 파일 불러와서 넣기)
+  //     const targetPositionPercentageBYS = {
+  //       x: tileCopos % columns / columns,
+  //       y: Math.floor(tileCopos / columns) / rows
+  //     }
+  //       const isSolved = Math.abs(targetPositionPercentageBYS.x - draggedToPercentageBYS.x) <= solveTolerancePercentage &&
+  //       Math.abs(targetPositionPercentageBYS.y - draggedToPercentageBYS.y) <= solveTolerancePercentage
+
+  //   }
+  // }
 
 
 // const onTilesocket = useCallback((tile: Tile, element: HTMLElement | null)) => {
@@ -226,11 +269,6 @@ socket.on('movesinglepuzzle',(data) => {
 //     draggingTileBYS.current.elem.style.setProperty('top', `${tileYval}px`)
 //   }})
 
-
-
-
-
-
   const onRootMouseUp = useCallback((event: React.TouchEvent | React.MouseEvent) => {
     if (draggingTile.current) {
       if (event.type === 'touchend') {
@@ -248,6 +286,15 @@ socket.on('movesinglepuzzle',(data) => {
       }
       const isSolved = Math.abs(targetPositionPercentage.x - draggedToPercentage.x) <= solveTolerancePercentage &&
         Math.abs(targetPositionPercentage.y - draggedToPercentage.y) <= solveTolerancePercentage
+
+        const clickpuzzledata : {tileCopos : number, tileId : string, rootSizeW : number, rootSizeH : number} = {
+          tileCopos : draggingTile.current.tile.correctPosition,
+          tileId : (event.target as HTMLDivElement).id,
+          rootSizeW : rootSize!.width,
+          rootSizeH : rootSize!.height
+        }
+        socket.emit('clickup-puzzle',clickpuzzledata);
+        console.log('clickup-emit');
 
       setTiles(prevState => {
         const newState = [
@@ -267,6 +314,57 @@ socket.on('movesinglepuzzle',(data) => {
       draggingTile.current = undefined
     }
   }, [draggingTile, setTiles, rootSize, onSolved])
+
+
+  let solveddata :{tileCopos : number, tileId : string, rootSizeW : number, rootSizeH : number}
+
+  socket.on('solvedpuzzle',(data) => {
+    console.log('solvedpuzzle 진입');
+    solveddata = data
+    clickon()
+    console.log('solved');
+    console.log(data);
+    })
+
+
+
+  function clickon(){
+    const {rootSizeW, rootSizeH} = solveddata
+    if (draggingTileBYS.current){
+      const draggedToPercentageBYS = {
+        x: clamp(draggingTileBYS.current!.elem.offsetLeft / rootSizeW, 0, 1),
+        y: clamp(draggingTileBYS.current!.elem.offsetTop / rootSizeH, 0, 1)
+      }
+      console.log('함수내부 1');
+      const {tileCopos} = solveddata
+      const draggedTileBYS = draggingTileBYS.current.tile
+      const targetPositionPercentageBYS = {
+        x: draggedTileBYS.correctPosition % columns / columns,
+        y: Math.floor(draggedTileBYS.correctPosition / columns) / rows
+      }
+        const isSolved = Math.abs(targetPositionPercentageBYS.x - draggedToPercentageBYS.x) <= solveTolerancePercentage &&
+        Math.abs(targetPositionPercentageBYS.y - draggedToPercentageBYS.y) <= solveTolerancePercentage
+
+        setTiles(prevState => {
+          const newState = [
+            ...prevState!.filter(it => it.correctPosition !== draggedTileBYS.correctPosition),
+            {
+              ...draggedTileBYS,
+              currentPosXPerc: !isSolved ? draggedToPercentageBYS.x : targetPositionPercentageBYS.x,
+              currentPosYPerc: !isSolved ? draggedToPercentageBYS.y : targetPositionPercentageBYS.y,
+              solved: isSolved
+            }
+          ]
+          if (newState.every(tile => tile.solved)) {
+            onSolved()
+          }
+          console.log('함수내부 2');
+          return newState
+        })
+
+    }
+  }
+
 
   return <div ref={onRootElementRendered}
               onTouchMove={onRootMouseMove}
@@ -318,8 +416,8 @@ return (
         {/* <button onClick={tileNumber}>버튼</button> */}
 
         <JigsawPuzzle imageSrc={img}
-        rows={3}
-        columns={3}
+        rows={2}
+        columns={2}
         onSolved={() => alert('Solved!')}
         />
   </div>

@@ -73,8 +73,12 @@ io.on('connection', socket => {
     })
 
     socket.on('move-puzzle', data =>{
-      console.log('move puzzle');
       socket.broadcast.emit('movesinglepuzzle',data);
+    })
+
+    socket.on('clickup-puzzle', data =>{
+      socket.broadcast.emit('solvedpuzzle', data);
+      console.log('clo=ickoun')
     })
  })
 //  app.get('/', function (요청, 응답) {
